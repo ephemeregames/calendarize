@@ -37,6 +37,13 @@ Here is an example of how to use the calenderize helpers in your views. If you p
       = ' : '
       = c.event.title
 
+Which will output:
+http://github.com/ephemeregames/calendarize/tree/master/examples/screenshot1.png
+
+And with a little bit of CSS:
+http://github.com/ephemeregames/calendarize/tree/master/examples/screenshot2.png
+http://github.com/ephemeregames/calendarize/tree/master/examples/screenshot3.png
+
 
 == TODO
 
