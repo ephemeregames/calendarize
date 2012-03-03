@@ -1,0 +1,43 @@
+== Calendarize
+
+A easy-to-use calendar helper for your rails projects. Currently supports a weekly and daily calendar.
+
+
+== Getting Started
+
+1. Add this gem in your *Gemfile* :
+
+    gem 'calendarize'
+
+2. Add an entry in *app/assets/javascripts/application.js* :
+
+    //= require calendarize
+
+3. Add this class method to any *controller* that will have a calendar in it's views :
+
+    class MyController < ApplicationController
+      calendarize
+    end
+
+4. Add this class method to any *model* that will represent an event in the calendar
+
+    class MyModel < ActiveRecord::Base
+      acts_as_event
+    end
+
+
+== Example
+
+Here is an example of how to use the calenderize helpers in your views. If you put *calendarize* in your controller, it gives you the *@calendar* variable. Also, in this example I added *acts_as_event* to my model *Event* so I have the scope *for_day*.
+
+    = daily_calendar @calendar[:date], Event.for_day(@calendar[:date]), verbose: @calendar[:verbose] do |c|
+      = l(c.event.start_time, format: :short)
+      = ' - '
+      = l(c.event.end_time, format: :short)
+      = ' : '
+      = c.event.title
+
+
+== TODO
+
+- Monthly calendar

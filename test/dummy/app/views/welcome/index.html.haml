@@ -1,0 +1,40 @@
+- @event = Event.new
+
+= form_for @event, url: events_path(calendar_current_params) do |f|
+  = f.label :start_time
+  = f.datetime_select :start_time
+  %br
+  = f.label :end_time
+  = f.datetime_select :end_time
+  %br
+  = f.label :title
+  = f.text_field :title
+  %br
+  = f.submit
+
+%br
+
+- switch_params = calendar_current_params
+- switch_params[:calendar][:scope] = @calendar[:scope] == CalendarizeHelper::Scopes::DAILY ? CalendarizeHelper::Scopes::WEEKLY : CalendarizeHelper::Scopes::DAILY
+
+= link_to switch_params[:calendar][:scope], request.path + '?' + switch_params.to_query
+
+%br
+
+- if @calendar[:scope] == CalendarizeHelper::Scopes::DAILY
+  = daily_calendar @calendar[:date], Event.for_day(@calendar[:date]), verbose: @calendar[:verbose] do |c|
+    = l(c.event.start_time, format: :short)
+    = ' - '
+    = l(c.event.end_time, format: :short)
+    = ' : '
+    = c.event.title
+
+
+- elsif @calendar[:scope] == CalendarizeHelper::Scopes::WEEKLY
+  = weekly_calendar @calendar[:date], Event.for_week(@calendar[:date]), verbose: @calendar[:verbose] do |c|
+    = l(c.event.start_time, format: :short)
+    = ' - '
+    = l(c.event.end_time, format: :short)
+    = ' : '
+    = c.event.title
+
