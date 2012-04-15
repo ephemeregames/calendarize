@@ -98,8 +98,8 @@ module CalendarizeHelper
 
         if params[:calendar]
           @calendar[:date] = Time.zone.parse(params[:calendar][:date]).to_datetime
-          @calendar[:verbose] = params[:calendar][:verbose] == 'true'
-          @calendar[:scope] = params[:calendar][:scope]
+          @calendar[:verbose] = params[:calendar].has_key?(:verbose) ? params[:calendar][:verbose] == 'true' : true
+          @calendar[:scope] = params[:calendar][:scope] || 'daily'
         else
           @calendar[:date] = DateTime.now.beginning_of_day
           @calendar[:verbose] = true
