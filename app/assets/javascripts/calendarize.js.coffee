@@ -34,7 +34,6 @@ class @DailyCalendar
     # initialize date picker
     $('.datepicker', @inner).datepicker(
       dateFormat: 'yy-mm-dd',
-      showOn: "button",
       onSelect: (date, instance) ->
 
         if window.location.href.search('calendar%5Bdate%5D') == -1
@@ -86,9 +85,6 @@ class @WeeklyCalendar
     # initialize date picker
     $('.datepicker', @inner).datepicker(
       dateFormat: 'yy-mm-dd',
-      showWeek: true,
-      firstDay: 1,
-      showOn: "button",
       onSelect: (date, instance) ->
 
         if window.location.href.search('calendar%5Bdate%5D') == -1
