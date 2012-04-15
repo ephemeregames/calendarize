@@ -1,0 +1,117 @@
+$width:     990px;
+$sidebar:   320px;
+$tdheight:  32px;
+$completionSquare: 10px;
+$highlight: #00647e;
+/*$light:     #e5e9ea; */
+$light:     #e7e9e9;
+$gradient:  #bababa;
+$dark:      #343434;
+$grey:      #6e6e6e;
+$blue:      #4ca6be;
+$green:     #00647e;
+$orange:    #c3613f;
+$red:       #992828;
+
+@mixin rounded($radius: 6px) {
+    border-radius: $radius;
+    -moz-border-radius: $radius;
+    -webkit-border-radius: $radius;
+}
+
+@mixin rotation($degrees) {
+    /* For IE, 0 = 0, 1 = 90, 2 = 180, 3 = 270 */
+
+    -webkit-transform: rotate($degrees);
+    -moz-transform: rotate($degrees);
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=($degrees / 90));
+}
+
+@mixin corners-rounded($top-left: 6px, $top-right: 6px, $bottom-right: 6px, $bottom-left: 6px) {
+    @if $top-left != 0 { border-top-left-radius: $top-left; }
+    @if $top-right != 0 { border-top-right-radius: $top-right; }
+    @if $bottom-left != 0 { border-bottom-left-radius: $bottom-left; }
+    @if $bottom-right != 0 { border-bottom-right-radius: $bottom-right; }
+}
+
+@mixin gradient-background($from, $to) {
+    background-color: $from;
+    /* Safari 4-5, Chrome 1-9 */
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($from), to($to));
+    /* Safari 5.1, Chrome 10+ */
+    background: -webkit-linear-gradient(top, $from, $to);
+    /* Firefox 3.6+ */
+    background: -moz-linear-gradient(top, $from, $to);
+    /* IE 10 */
+    background: -ms-linear-gradient(top, $from, $to);
+    /* Opera 11.10+ */
+    background: -o-linear-gradient(top, $from, $to);
+}
+
+@mixin button($border, $from, $to, $color, $hover_border: '', $hover_from: '', $hover_to: '', $hover_color: '', $radius: 6px) {
+    @include gradient-background($from, $to);
+    @include rounded($radius);
+    display: inline-block;
+    padding: 4px 8px;
+    text-align: center;
+    border-width: 1px;
+    border-style: solid;
+    border-color: $border;
+    color: $color;
+    text-shadow: 0 1px 0 $border;
+    text-decoration: none;
+    font-size: 12px;
+    line-height: 16px;
+    width: auto;
+    overflow: hidden;
+    font-weight: normal;
+
+    &.selected {
+        color: $hover_color;
+        border-color: $hover_border;
+        text-shadow: 0 1px 0 $hover_border;
+        @include gradient-background($hover_from, $hover_to);
+    }
+
+    &:hover {
+        cursor: hand;
+        cursor: pointer;
+        box-shadow:inset 0 0 5px $dark;
+    }
+}
+
+@mixin filter($border, $from, $to, $color, $hover_border: '', $hover_from: '', $hover_to: '', $hover_color: '', $radius: 6px) {
+    @include gradient-background($from, $to);
+    display: inline-block;
+    padding: 4px 8px;
+    text-align: center;
+    border-width: 1px;
+    border-top-style: solid;
+    border-bottom-style: solid;
+    border-color: $border;
+    color: $color;
+    text-shadow: 0 1px 0 $border;
+    text-decoration: none;
+    font-size: 12px;
+    line-height: 16px;
+    width: auto;
+    overflow: hidden;
+    font-weight: normal;
+
+    &.selected {
+        color: $hover_color;
+        border-color: $hover_border;
+        text-shadow: 0 1px 0 $hover_border;
+        @include gradient-background($hover_from, $hover_to);
+    }
+
+    &:hover {
+        cursor: hand;
+        cursor: pointer;
+        box-shadow:inset 0 0 5px $dark;
+    }
+}
+
+@mixin action_button {
+    @include button(#9f4944, #e5645f, #973833, #ffffff, #9f4944, #e5645f, #973833, #ffffff)
+}
