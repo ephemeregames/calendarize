@@ -16,6 +16,7 @@ class @DailyCalendar
 
 
   init: =>
+    # initialize events
     $('.calendar_event', @inner).each (index, element) =>
       e = $(element)
       e.width(@options['width'])
@@ -29,6 +30,20 @@ class @DailyCalendar
         offset: e.data('column') * (@options['width'] + 3) + ' 0',
         collision: 'none'
       })
+
+    # initialize date picker
+    $('.datepicker', @inner).datepicker(
+      dateFormat: 'yy-mm-dd',
+      showOn: "button",
+      onSelect: (date, instance) ->
+
+        if window.location.href.search('calendar%5Bdate%5D') == -1
+          window.location.href = window.location.href + '?calendar%5Bdate%5D=' + date
+        else
+          window.location.href = window.location.href
+            .replace(/calendar_date=[0-9\-]*/, 'calendar_date=' + date)
+            .replace(/calendar%5Bdate%5D=[0-9\-]*/, 'calendar%5Bdate%5D=' + date)
+    )
 
 
 class @WeeklyCalendar
@@ -66,6 +81,23 @@ class @WeeklyCalendar
         offset: '0 ' + e.data('index') * (@options['height']),
         collision: 'none'
       })
+
+
+    # initialize date picker
+    $('.datepicker', @inner).datepicker(
+      dateFormat: 'yy-mm-dd',
+      showWeek: true,
+      firstDay: 1,
+      showOn: "button",
+      onSelect: (date, instance) ->
+
+        if window.location.href.search('calendar%5Bdate%5D') == -1
+          window.location.href = window.location.href + '?calendar%5Bdate%5D=' + date
+        else
+          window.location.href = window.location.href
+            .replace(/calendar_date=[0-9\-]*/, 'calendar_date=' + date)
+            .replace(/calendar%5Bdate%5D=[0-9\-]*/, 'calendar%5Bdate%5D=' + date)
+    )
 
 
 $(document).ready ->
