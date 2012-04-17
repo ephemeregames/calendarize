@@ -9,6 +9,7 @@ module CalendarizeHelper
   # :events, ?, the events to display. An event must responds to:
   #   - start_time: a TimeWithZone object (from ActiveRecord)
   #   - end_time: a TimeWithZone object (from ActiveRecord)
+  #   - status: a string
   # :block |c|, is yield for every event placed so you can customize it's content. :c is the calendar, which have:
   #   - @event: the current event that is rendering
   #   - @is_all_day: if the current event is an all-day one
@@ -38,6 +39,7 @@ module CalendarizeHelper
   # :events, ?, the events to display. An event must responds to:
   #   - start_time: a TimeWithZone object (from ActiveRecord)
   #   - end_time: a TimeWithZone object (from ActiveRecord)
+  #   - status: a string
   # :block |c|, is yield for every event placed so you can customize it's content. :c is the calendar, which have:
   #   - @event: the current event that is rendering
   #
@@ -113,7 +115,7 @@ module CalendarizeHelper
 
 
   # Methods used in an ActiveRecord model to make it compatible with the library
-  # Note: A model must respond to :start_time and :end_time (:datetime fields)
+  # Note: A model must respond to :start_time, :end_time (:datetime fields) and :status (string)
   #
   # Usage:
   #
@@ -127,6 +129,7 @@ module CalendarizeHelper
   #     create_table :my_events do |t|
   #       t.datetime :start_time
   #       t.datetime :end_time
+  #       t.string :status
   #     end
   #   end
   # end
@@ -137,7 +140,7 @@ module CalendarizeHelper
   # send the events to the calendars.
   #
   # Note: You can have an event model that is not persisted in your database.
-  # As long as your model responds to the two methods :start_time and :end_time,
+  # As long as your model responds to the three methods :start_time, :end_time and :status,
   # you're OK. However, :acts_as_event won't help you in that case.
   #
   module Model
@@ -426,10 +429,9 @@ module CalendarizeHelper
           # place the events at the end of the calendar
           # they will be placed at the right place on the calendar with some javascript magic
           @placed_events.each do |e|
-            #raise e.inspect
             @event = e[1]
             @is_all_day = false
-            tables << content_tag(:div, class: 'calendar_event', data: { row_start: e[0][0], row_end: e[0][1], column: e[0][2] }, style: 'z-index: 1;') do
+            tables << content_tag(:div, class: ['calendar_event', @event.status.underscore], data: { row_start: e[0][0], row_end: e[0][1], column: e[0][2] }, style: 'z-index: 1;') do
               content_tag(:div, class: 'content') { @view_context.capture(self, &block) }
             end
           end
@@ -605,7 +607,7 @@ module CalendarizeHelper
           @placed_events.each do |e|
             @event = e[1]
             @is_all_day = false
-            tables << content_tag(:div, class: 'calendar_event', data: { row: e[0][0], column: e[0][1], index: e[0][2] }, style: 'z-index: 1;') do
+            tables << content_tag(:div, class: ['calendar_event', @event.status.underscore], data: { row: e[0][0], column: e[0][1], index: e[0][2] }, style: 'z-index: 1;') do
               content_tag(:div, class: 'content') { @view_context.capture(self, &block) }
             end
           end
