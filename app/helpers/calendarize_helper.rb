@@ -316,11 +316,11 @@ module CalendarizeHelper
             while (!placed) do
               if !columns.has_key?(j)
                 columns[j] = [e]
-                @placed_events << [[i, i + ((e.end_time - e.start_time) / (60 * @options[:unit])).ceil, j], e]
+                @placed_events << [[i, row_unit(e.end_time) + 1, j], e] # i + ((e.end_time - e.start_time) / (60 * @options[:unit])).ceil
                 placed = true
               elsif (row(e.start_time) >= row(columns[j].last.end_time))
                 columns[j] << e
-                @placed_events << [[i, i + ((e.end_time - e.start_time) / (60 * @options[:unit])).ceil, j], e]
+                @placed_events << [[i, row_unit(e.end_time) + 1, j], e]
                 placed = true
               else
                 j += 1
@@ -412,7 +412,7 @@ module CalendarizeHelper
 
               #raise @rows.inspect
               @rows_to_render_indexes.each do |i|
-                trs << content_tag(:tr, class: 'row_unit', style: 'height: 50px;') do
+                trs << content_tag(:tr, class: 'row_unit', style: 'height: 60px;') do
                   tds = ''.html_safe
                   tds << content_tag(:td, class: 'row_header', id: "row_header_#{@rows[i]}", style: 'width: 40px') { @rows_hours[i].strftime('%H:%M') }
                   tds << content_tag(:td, class: 'row_content', id: "row_content_#{@rows[i]}") { }
