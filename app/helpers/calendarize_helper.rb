@@ -410,7 +410,6 @@ module CalendarizeHelper
 
               trs = ''.html_safe
 
-              #raise @rows.inspect
               @rows_to_render_indexes.each do |i|
                 trs << content_tag(:tr, class: 'row_unit', style: 'height: 60px;') do
                   tds = ''.html_safe

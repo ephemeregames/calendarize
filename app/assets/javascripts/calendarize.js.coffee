@@ -21,7 +21,7 @@ class @DailyCalendar
       e = $(element)
       e.width(@options['width'])
       e.height(@options['height'] * (parseInt(e.data('row-end')) - parseInt(e.data('row-start'))) - 1)
-      console.log $('#row_content_' + e.data('row-start'), @not_all_day)
+      e.css('position', 'absolute')
 
       e.position({
         my: 'left top',
@@ -72,6 +72,7 @@ class @WeeklyCalendar
 
       e.width(cell.outerWidth(true))
       e.height(@options['height'])
+      e.css('position', 'absolute')
 
       e.position({
         my: 'left top',
