@@ -232,11 +232,13 @@ module CalendarizeHelper
 
       protected
 
+        # Get the row associated with the given time, in minutes
         def row(time_with_zone)
           (time_with_zone.to_datetime.hour * 60 + time_with_zone.to_datetime.min)
         end
 
 
+        # Get the row associated with the given time, in :units
         def row_unit(time_with_zone)
           row(time_with_zone) / @options[:unit]
         end
@@ -295,8 +297,17 @@ module CalendarizeHelper
         rows_events.each_value { |r| r.reject! { |e| row_unit(e.start_time) >= @_ending_row || row_unit(e.start_time) < @_starting_row } }
         rows_events.each_value { |r| r.reject! { |e| row_unit(e.end_time)   >= @_ending_row || row_unit(e.end_time)   < @_starting_row } }
 
-        # Sort each row (that now contains events) by the duration of the event
-        rows_events.each_value { |r| r.sort! { |e1, e2| e2.end_time - e2.start_time <=> e1.end_time - e1.start_time } }
+        # Sort each row by the starting time of the event, ascending order. If the starting time is the same, we
+        # then sort by the ending time
+        rows_events.each_value do |r|
+          r.sort! do |e1, e2|
+            if e1.start_time == e2.start_time
+              e1.end_time <=> e2.end_time
+            else
+              e1.start_time <=> e2.start_time
+            end
+          end
+        end
 
         # Put the events in columns, which give a tuple '[[row_start, row_end, column], event]' for the event
         # that will be used to output the calendar. The algorithm works like this:
@@ -316,11 +327,11 @@ module CalendarizeHelper
             while (!placed) do
               if !columns.has_key?(j)
                 columns[j] = [e]
-                @placed_events << [[i, row_unit(e.end_time) + 1, j], e] # i + ((e.end_time - e.start_time) / (60 * @options[:unit])).ceil
+                @placed_events << [[i, row_unit(e.end_time - 1) + 1, j], e] # i + ((e.end_time - e.start_time) / (60 * @options[:unit])).ceil
                 placed = true
-              elsif (row(e.start_time) >= row(columns[j].last.end_time))
+              elsif (row_unit(e.start_time) >= row_unit(columns[j].last.end_time - 1) + 1)
                 columns[j] << e
-                @placed_events << [[i, row_unit(e.end_time) + 1, j], e]
+                @placed_events << [[i, row_unit(e.end_time - 1) + 1, j], e]
                 placed = true
               else
                 j += 1
@@ -494,8 +505,17 @@ module CalendarizeHelper
         @_rows_events.each_value { |r| r.reject! { |e| row_unit(e.start_time) >= @_ending_row || row_unit(e.start_time) < @_starting_row } }
         @_rows_events.each_value { |r| r.reject! { |e| row_unit(e.end_time)   >= @_ending_row || row_unit(e.end_time)   < @_starting_row } }
 
-        # Sort each row (that now contains events) by the duration of the event
-        @_rows_events.each_value { |r| r.sort! { |e1, e2| e2.end_time - e2.start_time <=> e1.end_time - e1.start_time } }
+        # Sort each row by the starting time of the event, ascending order. If the starting time is the same, we
+        # then sort by the ending time
+        @_rows_events.each_value do |r|
+          r.sort! do |e1, e2|
+            if e1.start_time == e2.start_time
+              e1.end_time <=> e2.end_time
+            else
+              e1.start_time <=> e2.start_time
+            end
+          end
+        end
 
         # We remove the events that are outside the days watched
         @_rows_events.each_value { |r| r.reject! { |e| e.start_time.to_date < @day_start || e.start_time.to_date > @day_end } }
