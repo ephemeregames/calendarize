@@ -172,6 +172,20 @@ module CalendarizeHelper
 
   private
 
+    # This proxy class is used when we pass an hash instead of an Event class
+    class HashEvent
+
+      def initialize(event)
+        @event = event
+      end
+
+      def method_missing(method, *args, &block)
+        @event.send(:[], method)
+      end
+
+    end
+
+    # This class builds a calendar. It is used to build the daily and the weekly calendars
     class AbstractCalendarBuilder < ActionView::Base
 
       @@uuid = 100
@@ -195,6 +209,7 @@ module CalendarizeHelper
 
         @day = args.shift || Date.today
         @events = args.shift || []
+        @events = @events.map{ |e| HashEvent.new(e) } if @events.first.kind_of?(Hash)
         @event = nil # can be accessed by the passed block
         @is_all_day = false
 
@@ -438,12 +453,19 @@ module CalendarizeHelper
 
           # place the events at the end of the calendar
           # they will be placed at the right place on the calendar with some javascript magic
-          @placed_events.each do |e|
-            @event = e[1]
-            @is_all_day = false
-            tables << content_tag(:div, class: ['calendar_event', @event.status.underscore], data: { row_start: e[0][0], row_end: e[0][1], column: e[0][2] }, style: 'z-index: 1;') do
-              content_tag(:div, class: 'content') { @view_context.capture(self, &block) }
+          tables << content_tag(:div, class: 'not_all_day_events') do
+
+            events_div = ''.html_safe
+
+            @placed_events.each do |e|
+              @event = e[1]
+              @is_all_day = false
+              events_div << content_tag(:div, class: ['calendar_event', @event.status.underscore], data: { row_start: e[0][0], row_end: e[0][1], column: e[0][2] }, style: 'z-index: 1;') do
+                content_tag(:div, class: 'content') { @view_context.capture(self, &block) }
+              end
             end
+
+            events_div
           end
 
           tables

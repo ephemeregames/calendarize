@@ -3,6 +3,7 @@ class @DailyCalendar
   constructor: (id, opts) ->
     @inner = $('#' + id)
     @not_all_day = $('#not_all_day', @inner)
+    @not_all_day_events = $('.not_all_day_events', @inner)
     @first_row = $('.row_content:first', @not_all_day)
 
     @options = {
@@ -17,17 +18,33 @@ class @DailyCalendar
 
   init: =>
     # initialize events
+    @not_all_day_events.css('position', 'absolute')
+    @not_all_day_events.css('overflow-x', 'hidden')
+    @not_all_day_events.width(@not_all_day.width() - @first_row.position().left)
+    @not_all_day_events.height(@not_all_day.height() - @not_all_day.position().top)
+
+    @not_all_day_events.position({
+      my: 'left top',
+      at: 'left top',
+      of: @first_row,
+      collision: 'none'
+    })
+
     $('.calendar_event', @inner).each (index, element) =>
       e = $(element)
+
+      row_start = parseInt(e.data('row-start'))
+      row_end = parseInt(e.data('row-end'))
+
       e.width(@options['width'])
-      e.height(@options['height'] * (parseInt(e.data('row-end')) - parseInt(e.data('row-start'))) - 1)
+      e.height(@options['height'] * (row_end - row_start) - 1)
       e.css('position', 'absolute')
 
       e.position({
         my: 'left top',
         at: 'left top',
-        of: $('#row_content_' + e.data('row-start'), @not_all_day),
-        offset: e.data('column') * (@options['width'] + 3) + ' 0',
+        of: @not_all_day_events,
+        offset: e.data('column') * (@options['width'] + 3) + ' ' + ($('#row_content_' + row_start, @not_all_day).position().top - @first_row.position().top),
         collision: 'none'
       })
 
