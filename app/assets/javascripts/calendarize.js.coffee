@@ -48,6 +48,14 @@ class @DailyCalendar
         collision: 'none'
       })
 
+
+    # Set height of rows
+    $('td', @inner).each (index, element) =>
+      e = $(element)
+      e.css('height', e.height())
+      console.log e
+
+
     # initialize date picker
     $('.datepicker', @inner).datepicker(
       dateFormat: 'yy-mm-dd',
@@ -98,6 +106,12 @@ class @WeeklyCalendar
         offset: '0 ' + e.data('index') * (@options['height']),
         collision: 'none'
       })
+
+
+    # Set height of rows
+    $('td', @inner).each (index, element) =>
+      e = $(element)
+      e.css('height', e.height())
 
 
     # initialize date picker

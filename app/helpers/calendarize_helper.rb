@@ -22,6 +22,8 @@ module CalendarizeHelper
   # :day_start, integer, when to start showing events on the calendar, in minutes, defaults to 0
   # :day_end, integer, when to stop showing events on the calendar, in minutes, defaults to 1440 (24 hours)
   # :verbose, boolean, show all the rows or only those with events, defaults to true
+  # :unit_clicked_path, Array of 2 components: url, options, a link to follow when we click on the units on the left side
+  # :cell_clicked_path, Array of 2 components: url, options, a link to follow when we click an empty spot on a row
   #
   def daily_calendar_for(*args, &block)
     DailyCalendarBuilder.new(self, *args).compute.render(&block)
@@ -199,12 +201,13 @@ module CalendarizeHelper
         @view_context   = view_context
 
         @options = {
-            unit: 60,
-            date_format: :long,
-            url: @view_context.request.path,
-            verbose: true,
-            day_start: 0,
-            day_end: 1440
+          unit: 60,
+          date_format: :long,
+          url: @view_context.request.path,
+          verbose: true,
+          day_start: 0,
+          day_end: 1440,
+          cell_clicked_path: nil
         }.merge!(opts)
 
         @day = args.shift || Date.today
@@ -278,7 +281,8 @@ module CalendarizeHelper
 
         opts = {
           id: "daily_calendar_#{@@uuid}",
-          scope: 'daily'
+          scope: 'daily',
+          unit_clicked_path: nil
         }.merge!(args.extract_options!)
 
         args << opts
@@ -439,8 +443,27 @@ module CalendarizeHelper
               @rows_to_render_indexes.each do |i|
                 trs << content_tag(:tr, class: 'row_unit', style: 'height: 60px;') do
                   tds = ''.html_safe
-                  tds << content_tag(:td, class: 'row_header', id: "row_header_#{@rows[i]}", style: 'width: 40px') { @rows_hours[i].strftime('%H:%M') }
-                  tds << content_tag(:td, class: 'row_content', id: "row_content_#{@rows[i]}") { }
+
+                  tds << content_tag(:td, class: 'row_header', id: "row_header_#{@rows[i]}", style: 'width: 40px; text-align: center') do
+                    if @options[:unit_clicked_path].nil?
+                      @rows_hours[i].strftime('%H:%M')
+                    elsif @options[:unit_clicked_path].kind_of?(Array)
+                      link_to(@rows_hours[i].strftime('%H:%M'), @options[:unit_clicked_path][0] + '?' +  { start_time: I18n.l(@rows_hours[i]) }.to_query, @options[:unit_clicked_path][1])
+                    else
+                      link_to(@rows_hours[i].strftime('%H:%M'), @options[:unit_clicked_path] + '?' +  { start_time: I18n.l(@rows_hours[i]) }.to_query)
+                    end
+                  end
+
+                  tds << content_tag(:td, class: 'row_content', id: "row_content_#{@rows[i]}") do
+                    if @options[:cell_clicked_path].nil?
+
+                    elsif @options[:cell_clicked_path].kind_of?(Array)
+                      link_to('', @options[:cell_clicked_path][0] + '?' +  { start_time: I18n.l(@rows_hours[i]) }.to_query, @options[:cell_clicked_path][1].merge({ style: 'display: block; width: 100%; height: 100%' }))
+                    else
+                      link_to('', @options[:cell_clicked_path] + '?' +  { start_time: I18n.l(@rows_hours[i]) }.to_query, style: 'display: block; width: 100%; height: 100%')
+                    end
+                  end
+
                   tds
                 end
               end
@@ -630,7 +653,15 @@ module CalendarizeHelper
                   tds << content_tag(:td, class: 'row_header', id: "row_header_#{@rows[i]}", style: 'width: 40px') { @rows_hours[i].strftime('%H:%M') }
 
                   @days_shown.each_index do |j|
-                    tds << content_tag(:td, class: ["row_#{@rows[i]}", "column_#{j}"]) { }
+                    tds << content_tag(:td, class: ["row_#{@rows[i]}", "column_#{j}"]) do
+                      if @options[:cell_clicked_path].nil?
+
+                      elsif @options[:cell_clicked_path].kind_of?(Array)
+                        link_to('', @options[:cell_clicked_path][0] + '?' +  { start_time: I18n.l(@rows_hours[i] + (j - 2).days)}.to_query, @options[:cell_clicked_path][1].merge({ style: 'display: block; width: 100%; height: 100%' }))
+                      else
+                        link_to('', @options[:cell_clicked_path] + '?' +  { start_time: I18n.l(@rows_hours[i] + (j - 2).days)}.to_query, style: 'display: block; width: 100%; height: 100%')
+                      end
+                    end
                   end
 
                   tds
