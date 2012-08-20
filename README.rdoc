@@ -43,8 +43,3 @@ http://github.com/ephemeregames/calendarize/raw/master/examples/screenshot1.png
 And with a little bit of CSS:
 http://github.com/ephemeregames/calendarize/raw/master/examples/screenshot2.png
 http://github.com/ephemeregames/calendarize/raw/master/examples/screenshot3.png
-
-
-== TODO
-
-- Monthly calendar
