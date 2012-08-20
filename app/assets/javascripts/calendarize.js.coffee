@@ -20,7 +20,7 @@ class @DailyCalendar
     # initialize events
     @not_all_day_events.css('position', 'absolute')
     @not_all_day_events.css('overflow-x', 'hidden')
-    @not_all_day_events.width(@not_all_day.width() - @first_row.position().left) unless @first_row.empty?
+    @not_all_day_events.width(@not_all_day.width() - @first_row.position().left) if @first_row
     @not_all_day_events.height(@not_all_day.height() - @not_all_day.position().top)
 
     @not_all_day_events.position({
@@ -28,7 +28,7 @@ class @DailyCalendar
       at: 'left top',
       of: @first_row,
       collision: 'none'
-    }) unless @first_row.empty?
+    }) if @first_row
 
     $('.calendar_event', @inner).each (index, element) =>
       e = $(element)
