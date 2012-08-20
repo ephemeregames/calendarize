@@ -1,6 +1,6 @@
 == Calendarize
 
-A easy-to-use calendar helper for your rails projects. Currently supports a weekly and daily calendar.
+A easy-to-use [monthly/weekly/daily] calendar helper for your rails projects.
 
 
 == Getting Started
