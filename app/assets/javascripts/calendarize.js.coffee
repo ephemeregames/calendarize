@@ -132,7 +132,7 @@ class @MonthlyCalendar
     @inner = $('#' + id)
 
     @options = {
-      height: 60
+      height: 70
     }
 
     $.extend(@options, opts)

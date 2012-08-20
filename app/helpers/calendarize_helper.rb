@@ -679,7 +679,7 @@ module CalendarizeHelper
               trs = ''.html_safe
 
               @rows_to_render_indexes.each do |i|
-                trs << content_tag(:tr, class: 'row_unit', data: { events_count: @_rows_events.include?(@rows[i]) ? @_rows_events[@rows[i]].map{ |e| column(e.start_time) }.group_by{ |i| i }.map{ |k, v| v.count }.max : 0 }) do
+                trs << content_tag(:tr, class: 'row_unit', data: { events_count: @_rows_events.include?(@rows[i]) ? @_rows_events[@rows[i]].map{ |e| column(e.start_time) }.group_by{ |i| i }.map{ |k, v| v.count }.max + 1 : 0 }) do
                   tds = ''.html_safe
 
                   tds << content_tag(:td, class: 'row_header', id: "row_header_#{@rows[i]}", style: 'width: 40px') { @rows_hours[i].strftime('%H:%M') }
@@ -751,11 +751,6 @@ module CalendarizeHelper
 
       super(view_context, *args)
 
-      # We calculate the number of days between :week_start and :week_end
-      #ws = Date::DAYS_INTO_WEEK[@options[:week_start]]
-      #we = Date::DAYS_INTO_WEEK[@options[:week_end]]
-      #we += 7 if we <= ws
-
       @day_start = @day.beginning_of_month.to_date
       @day_end = @day.end_of_month.to_date
 
@@ -770,14 +765,12 @@ module CalendarizeHelper
       week_days = days_range
       @events.reject!{ |e| !week_days.include?(e.start_time.to_date.wday) }
 
-
       # We put the events in a [i, j] list where i == row, j == column, so:
       # i: {
       #   j: {
       #     event
       #   }
       # }
-
       @placed_events = { }
 
       @events.each do |e|
@@ -803,7 +796,7 @@ module CalendarizeHelper
           content_tag(:thead) do
             content_tag(:tr) do
               content = ''.html_safe
-              content << content_tag(:th, style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.monthly_calendar.options.verbose', default: 'Compact') : I18n.t('calendarize.monthly_calendar.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
+              content << content_tag(:th, style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.options.verbose', default: 'Compact') : I18n.t('calendarize.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
               content << content_tag(:th, style: 'width: 33%;') { (I18n.t('calendarize.monthly_calendar.month_of', default: 'Month of') + "<input type='text' class='datepicker' value='" + I18n.l(@day_start.to_date, format: @options[:date_format]) + "' />").html_safe }
               content << content_tag(:th, style: 'width: 33%;') do
                 options = ''.html_safe
@@ -831,7 +824,7 @@ module CalendarizeHelper
               days_range.each do |i|
                 weekday = wday_to_string(i)
 
-                header << content_tag(:th, style: "width: #{100/number_of_days_per_week}%") { I18n.t("calendarize.monthly_calendar.options.day.#{weekday}", default: weekday) }
+                header << content_tag(:th, style: "width: #{100/number_of_days_per_week}%") { I18n.t("calendarize.day.#{weekday.underscore}", default: weekday) }
               end
 
               header
@@ -845,13 +838,16 @@ module CalendarizeHelper
             rows_count.times do |i|
               # The cells header that contains the day of the month
               next unless @options[:verbose] || @placed_events.has_key?(i)
+              next unless i != 0 || show_first_row
 
               trs << content_tag(:tr, class: 'row_days_of_month') do
                 tds = ''.html_safe
 
                 number_of_days_per_week.times do |j|
-                  tds << content_tag(:td, class: ["row_#{i}", "column_#{j}"]) do
-                    day = row_to_day(i, j)
+                  day = row_to_day(i, j)
+                  classes = ["row_#{i}", "column_#{j}"]
+                  classes << 'disabled' if day.nil?
+                  tds << content_tag(:td, class: classes) do
                     day = day ? link_to(day.to_s, @options[:url] + '?' + to_query_params({ date: @day_start + (day - 1).days, scope: CalendarizeHelper::Scopes::DAILY })) : ''
                     day
                   end
@@ -861,13 +857,15 @@ module CalendarizeHelper
               end
 
               # The cell for the events
-              trs << content_tag(:tr, class: 'row_events', data: { events_count: @placed_events.has_key?(i) ? @placed_events.max { |a, b| a.count <=> b.count }.count : 1 }) do
+              trs << content_tag(:tr, class: 'row_events', data: { events_count: @placed_events.has_key?(i) ? @placed_events[i].values.max { |a, b| a.count <=> b.count }.count + 1 : 1 }) do
                 tds = ''.html_safe
 
                 number_of_days_per_week.times do |j|
-                  tds << content_tag(:td, class: ["row_#{i}", "column_#{j}"]) do
-                    day = row_to_day(i, j)
+                  day = row_to_day(i, j)
+                  classes = ["row_#{i}", "column_#{j}"]
+                  classes << 'disabled' if day.nil?
 
+                  tds << content_tag(:td, class: classes) do
                     if @options[:cell_clicked_path].nil? || day.nil?
 
                     elsif @options[:cell_clicked_path].kind_of?(Array)
@@ -910,23 +908,25 @@ module CalendarizeHelper
 
     private
 
-      # We calculate the number of days between :week_start and :week_end
+      # We calculate the number of days between :week_start (inclusive) and :week_end (inclusive)
+      # DAYS_INTO_WEEK = { monday: 0, tuesday: 1, wednesday: 2, thursday: 3, friday: 4, saturday: 5, sunday: 6 }
       def number_of_days_per_week
         ws = Date::DAYS_INTO_WEEK[@options[:week_start]]
         we = Date::DAYS_INTO_WEEK[@options[:week_end]]
         we += 7 if we <= ws
-        we + 1
+        we - ws + 1
       end
 
 
       # Get the range of days to show
       def days_range
         ws = Date::DAYS_INTO_WEEK[@options[:week_start]]
-        (ws...number_of_days_per_week).map{ |d| d % 7 }
+        (ws...ws+number_of_days_per_week).map{ |d| d % 7 }
       end
 
 
       # Transform a wday to string
+      # DAYNAMES = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 }
       def wday_to_string(wday)
         Date::DAYNAMES[(wday + 1) % 7]
       end
@@ -946,11 +946,20 @@ module CalendarizeHelper
         starting_wday = @day_start.wday - 1
         starting_wday = 6 if starting_wday < 0
 
+        # day without taking into account the :week_start so every 1st
+        # of the month is on a :monday on case [0, 0]
         base = (i * 7) + j
 
-        return nil if base < starting_wday || base - starting_wday + 1 > days_in_month(@day_start)
+        # we add the :week_start
+        base += Date::DAYS_INTO_WEEK[@options[:week_start]]
 
-        base - starting_wday + 1
+        # we adjust with the starting day of the month
+        base -= starting_wday
+        base += 1
+
+        return nil if base < 1 || base > days_in_month(@day_start)
+
+        base
       end
 
 
@@ -961,6 +970,9 @@ module CalendarizeHelper
         starting_wday = 6 if starting_wday < 0
 
         base = month_day + starting_wday - 1
+
+        #raiser "[#{i},#{j}] => #{base - starting_wday + 1}"
+
 
         #days_per_week = number_of_days_per_week
 
@@ -986,6 +998,14 @@ module CalendarizeHelper
         delta_in_days += 7 if delta_in_days <= 0
 
         from + delta_in_days
+      end
+
+
+      # Dirty way to check if we must show the first row of the calendar
+      # We only show the first row if none of the month days of that row
+      # fall between :week_start and :week_end
+      def show_first_row
+        !number_of_days_per_week.times.map{ |j| row_to_day(0, j) }.reject(&:nil?).empty?
       end
 
   end
