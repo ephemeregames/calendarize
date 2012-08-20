@@ -1,7 +1,7 @@
 PATH
   remote: ../calendarize
   specs:
-    calendarize (0.21)
+    calendarize (0.22)
       rails (>= 3.1.0)
 
 GEM
