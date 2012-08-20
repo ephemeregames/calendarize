@@ -413,7 +413,7 @@ module CalendarizeHelper
             content_tag(:thead) do
               content_tag(:tr) do
                 content = ''.html_safe
-                content << content_tag(:th, style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.daily_calendar.options.verbose', default: 'Compact') : I18n.t('calendarize.daily_calendar.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
+                content << content_tag(:th, style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.options.verbose', default: 'Compact') : I18n.t('calendarize.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
                 content << content_tag(:th, style: 'width: 33%;') { ("<input type='text' class='datepicker' value='" + I18n.l(@day.to_date, format: @options[:date_format]) + "' />").html_safe }
                 content << content_tag(:th, style: 'width: 33%;') do
                   options = ''.html_safe
@@ -639,7 +639,7 @@ module CalendarizeHelper
             content_tag(:thead) do
               content_tag(:tr) do
                 content = ''.html_safe
-                content << content_tag(:th, style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.weekly_calendar.options.verbose', default: 'Compact') : I18n.t('calendarize.weekly_calendar.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
+                content << content_tag(:th, style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.options.verbose', default: 'Compact') : I18n.t('calendarize.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
                 content << content_tag(:th, style: 'width: 33%;') { (I18n.t('calendarize.weekly_calendar.week_of', default: 'Week of') + "<input type='text' class='datepicker' value='" + I18n.l(@day_start.to_date, format: @options[:date_format]) + "' />").html_safe }
                 content << content_tag(:th, style: 'width: 33%;') do
                   options = ''.html_safe
