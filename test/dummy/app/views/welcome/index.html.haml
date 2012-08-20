@@ -1,6 +1,8 @@
 - @event = Event.new
 
 = form_for @event, url: events_path(calendar_current_params) do |f|
+  = f.hidden_field :status, value: 'active'
+
   = f.label :start_time
   = f.datetime_select :start_time
   %br
@@ -14,8 +16,13 @@
 
 %br
 
-- switch_params = calendar_current_params
-- switch_params[:calendar][:scope] = @calendar[:scope] == CalendarizeHelper::Scopes::DAILY ? CalendarizeHelper::Scopes::WEEKLY : CalendarizeHelper::Scopes::DAILY
+:ruby
+  switch_params = calendar_current_params
+  switch_params[:calendar][:scope] = case @calendar[:scope]
+    when CalendarizeHelper::Scopes::DAILY then CalendarizeHelper::Scopes::WEEKLY
+    when CalendarizeHelper::Scopes::WEEKLY then CalendarizeHelper::Scopes::MONTHLY
+    when CalendarizeHelper::Scopes::MONTHLY then CalendarizeHelper::Scopes::DAILY
+  end
 
 = link_to switch_params[:calendar][:scope], request.path + '?' + switch_params.to_query
 
@@ -38,3 +45,10 @@
     = ' : '
     = c.event.title
 
+- elsif @calendar[:scope] == CalendarizeHelper::Scopes::MONTHLY
+  = monthly_calendar @calendar[:date], Event.for_month(@calendar[:date]), verbose: @calendar[:verbose] do |c|
+    = l(c.event.start_time, format: :short)
+    = ' - '
+    = l(c.event.end_time, format: :short)
+    = ' : '
+    = c.event.title

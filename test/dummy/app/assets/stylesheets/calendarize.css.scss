@@ -57,3 +57,40 @@
       text-align: center;
     }
 }
+
+
+.monthly_calendar {
+    .calendar_event {
+        display: inline-block;
+        outline: none;
+        cursor: pointer;
+        text-shadow: 0 1px 1px rgba(0,0,0,.3);
+        -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.2);
+        -moz-box-shadow: 0 1px 2px rgba(0,0,0,.2);
+        box-shadow: 0 1px 2px rgba(0,0,0,.2);
+        border: solid 1px #949494;
+        background: -webkit-gradient(linear, left top, left bottom, from(#d9d9d9), to(#f4f4f4));
+
+        .content {
+            padding: 5px;
+        }
+     }
+
+     #not_all_day {
+        .row_days_of_month {
+          td {
+            text-align: right;
+          }
+        }
+
+         .row_events {
+            height: 55px;
+        }
+     }
+
+    .datepicker {
+      border: 0px;
+      background-color: transparent;
+      text-align: center;
+    }
+}

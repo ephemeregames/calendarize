@@ -20,7 +20,7 @@ class @DailyCalendar
     # initialize events
     @not_all_day_events.css('position', 'absolute')
     @not_all_day_events.css('overflow-x', 'hidden')
-    @not_all_day_events.width(@not_all_day.width() - @first_row.position().left)
+    @not_all_day_events.width(@not_all_day.width() - @first_row.position().left) unless @first_row.empty?
     @not_all_day_events.height(@not_all_day.height() - @not_all_day.position().top)
 
     @not_all_day_events.position({
@@ -28,7 +28,7 @@ class @DailyCalendar
       at: 'left top',
       of: @first_row,
       collision: 'none'
-    })
+    }) unless @first_row.empty?
 
     $('.calendar_event', @inner).each (index, element) =>
       e = $(element)
@@ -53,8 +53,6 @@ class @DailyCalendar
     $('td', @inner).each (index, element) =>
       e = $(element)
       e.css('height', e.height())
-      console.log e
-
 
     # initialize date picker
     $('.datepicker', @inner).datepicker(
@@ -128,6 +126,85 @@ class @WeeklyCalendar
     )
 
 
+class @MonthlyCalendar
+
+  constructor: (id, opts) ->
+    @inner = $('#' + id)
+
+    @options = {
+      height: 60
+    }
+
+    $.extend(@options, opts)
+
+    this.init()
+
+
+  init: =>
+    $('.row_events', @inner).each (index, element) =>
+      e = $(element)
+      e.height(e.data('events-count') * @options['height'])
+
+    $('.calendar_event', @inner).each (index, element) =>
+      e = $(element)
+
+      # find the cell to put the event
+      cell = $('.row_events >' + '.row_' + e.data('row') + '.column_' + e.data('column'), @inner)
+
+      e.width(cell.outerWidth(true) - 1)
+      e.height(@options['height'])
+      e.css('position', 'absolute')
+
+      e.position({
+        my: 'left top',
+        at: 'left top',
+        of: $('.row_events >' + '.row_' + e.data('row') + '.column_' + e.data('column'), @inner),
+        offset: '0 ' + e.data('index') * (@options['height']),
+        collision: 'none'
+      })
+
+
+    # Set height of rows
+    $('td', @inner).each (index, element) =>
+      e = $(element)
+      e.css('height', e.height())
+
+
+    # initialize date picker
+    $('.datepicker', @inner).datepicker(
+      dateFormat: 'mm-yy'
+      changeMonth: true
+      changeYear: true
+      showButtonPanel: true
+      onClose: (date, instance) ->
+        month = $('#ui-datepicker-div .ui-datepicker-month :selected', @inner).val()
+        year = $('#ui-datepicker-div .ui-datepicker-year :selected', @inner).val()
+
+        before = $(this).val()
+        $(this).val($.datepicker.formatDate('yy-mm', new Date(year, month, 1)))
+        now = $(this).val()
+
+        return if now == before
+
+        date = now + '-1'
+
+        if window.location.href.search('calendar%5Bdate%5D') == -1
+          window.location.href = window.location.href + '?calendar%5Bdate%5D=' + date
+        else
+          window.location.href = window.location.href
+            .replace(/calendar_date=[0-9\-]*/, 'calendar_date=' + date)
+            .replace(/calendar%5Bdate%5D=[0-9\-]*/, 'calendar%5Bdate%5D=' + date)
+    )
+
+    $('.datepicker', @inner).bind 'focus', ->
+      $('.ui-datepicker-calendar', @inner).hide()
+      $('#ui-datepicker-div', @inner).position(
+        my: 'center top'
+        at: 'center bottom'
+        of: $(this)
+      )
+
+
 $(document).ready ->
 
   # Initialize every daily calendar on the page
@@ -142,3 +219,10 @@ $(document).ready ->
 
   $('.weekly_calendar').each (index, element) =>
     weekly_calendars << new WeeklyCalendar(element.id)
+
+
+  # Initialize every monthly calendar on the page
+  monthly_calendars = []
+
+  $('.monthly_calendar').each (index, element) =>
+    monthly_calendars << new MonthlyCalendar(element.id)

@@ -59,6 +59,31 @@ module CalendarizeHelper
   alias_method :weekly_calendar, :weekly_calendar_for
 
 
+  # Creates a monthly calendar for events
+  #
+  # Usage: monthly_calendar day, events, [options] { |c| ... }
+  #
+  # Params
+  # :day, Date, the day to display. Will display the month that contains that day
+  # :events, ?, the events to display. An event must responds to:
+  #   - start_time: a TimeWithZone object (from ActiveRecord)
+  #   - end_time: a TimeWithZone object (from ActiveRecord)
+  #   - status: a string
+  # :block |c|, is yield for every event placed so you can customize it's content. :c is the calendar, which have:
+  #   - @event: the current event that is rendering
+  #
+  # Options
+  # :unit, integer, the time unit in minutes between two rows, defaults to 60. Must be > 0.
+  # :date_format, symbol, the format of the date to find at I18n.l('date.formats.date_format'), defaults to :long
+  # :id, integer, id of the calendar, default to one provided by this helper
+  #
+  def monthly_calendar_for(*args, &block)
+    MonthlyCalendarBuilder.new(self, *args).compute.render(&block)
+  end
+
+  alias_method :monthly_calendar, :monthly_calendar_for
+
+
   # Returns the current params for a calendar
   # Used when you want to keep track of the calendar between two requests
   # Can be used with path helpers
@@ -156,6 +181,13 @@ module CalendarizeHelper
               'start_time >= ? AND start_time < ?',
               date ? date.to_time.beginning_of_week(week_start) : DateTime.now.beginning_of_week(week_start),
               date ? date.to_time.end_of_week(week_start) : DateTime.now.end_of_week(week_start)
+            )
+        }
+        scope :for_month, lambda { |date = nil|
+            where(
+              'start_time >= ? AND start_time < ?',
+              date ? date.to_time.beginning_of_month : DateTime.now.beginning_of_month,
+              date ? date.to_time.end_of_month : DateTime.now.end_of_month
             )
         }
       end
@@ -510,7 +542,7 @@ module CalendarizeHelper
         }.merge!(args.extract_options!)
 
         opts[:week_start] = opts[:week_start].to_sym
-        opts[:week_end] = opts[:week_end].to_sym
+        opts[:week_end]   = opts[:week_end].to_sym
 
         args << opts
 
@@ -699,5 +731,263 @@ module CalendarizeHelper
         end
 
     end
+
+
+    class MonthlyCalendarBuilder < AbstractCalendarBuilder
+
+    def initialize(view_context, *args)
+
+      opts = {
+        id: "monthly_calendar_#{@@uuid}",
+        week_start: :monday,
+        week_end: :sunday,
+        scope: 'monthly'
+      }.merge!(args.extract_options!)
+
+      opts[:week_start] = opts[:week_start].to_sym
+      opts[:week_end]   = opts[:week_end].to_sym
+
+      args << opts
+
+      super(view_context, *args)
+
+      # We calculate the number of days between :week_start and :week_end
+      #ws = Date::DAYS_INTO_WEEK[@options[:week_start]]
+      #we = Date::DAYS_INTO_WEEK[@options[:week_end]]
+      #we += 7 if we <= ws
+
+      @day_start = @day.beginning_of_month.to_date
+      @day_end = @day.end_of_month.to_date
+
+    end
+
+
+    def compute
+
+      super
+
+      # We remove the events that doesn't fall in a weekday between :week_start and :week_end
+      week_days = days_range
+      @events.reject!{ |e| !week_days.include?(e.start_time.to_date.wday) }
+
+
+      # We put the events in a [i, j] list where i == row, j == column, so:
+      # i: {
+      #   j: {
+      #     event
+      #   }
+      # }
+
+      @placed_events = { }
+
+      @events.each do |e|
+        i, j = day_to_row(e.start_time.to_date.day)
+
+        @placed_events[i]    = { } unless @placed_events.has_key?(i)
+        @placed_events[i][j] = [ ] unless @placed_events[i].has_key?(j)
+
+        @placed_events[i][j] << e
+      end
+
+      self
+    end
+
+
+    def render(&block)
+      content_tag(:div, class: 'monthly_calendar', id: @options[:id], style: 'position: relative;') do
+
+        tables = ''.html_safe
+
+        # controls
+        tables << content_tag(:table, id: 'controls', class: 'styled', style: 'width: 100%;') do
+          content_tag(:thead) do
+            content_tag(:tr) do
+              content = ''.html_safe
+              content << content_tag(:th, style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.monthly_calendar.options.verbose', default: 'Compact') : I18n.t('calendarize.monthly_calendar.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
+              content << content_tag(:th, style: 'width: 33%;') { (I18n.t('calendarize.monthly_calendar.month_of', default: 'Month of') + "<input type='text' class='datepicker' value='" + I18n.l(@day_start.to_date, format: @options[:date_format]) + "' />").html_safe }
+              content << content_tag(:th, style: 'width: 33%;') do
+                options = ''.html_safe
+                options << link_to(I18n.t('calendarize.monthly_calendar.options.previous_month', default: 'Previous month'), @options[:url] + '?' +  to_query_params({ date: @day_start.prev_month.to_date }))
+                options << ' | '
+                options << link_to(I18n.t('calendarize.monthly_calendar.options.current_month', default: 'This month'), @options[:url] + '?' + to_query_params)
+                options << ' | '
+                options << link_to(I18n.t('calendarize.monthly_calendar.options.next_month', default: 'Next month'), @options[:url] + '?' + to_query_params({ date: @day_end.next_month.to_date }))
+                options
+              end
+              content
+            end
+          end
+        end
+
+        # normal events
+        tables << content_tag(:table, id: 'not_all_day', class: 'styled', style: 'width: 100%;') do
+          content = ''.html_safe
+
+          # The header that contains the weekday
+          content << content_tag(:thead) do
+            content_tag(:tr) do
+              header = ''.html_safe
+
+              days_range.each do |i|
+                weekday = wday_to_string(i)
+
+                header << content_tag(:th, style: "width: #{100/number_of_days_per_week}%") { I18n.t("calendarize.monthly_calendar.options.day.#{weekday}", default: weekday) }
+              end
+
+              header
+            end
+          end
+
+          content << content_tag(:tbody) do
+
+            trs = ''.html_safe
+
+            rows_count.times do |i|
+              # The cells header that contains the day of the month
+              next unless @options[:verbose] || @placed_events.has_key?(i)
+
+              trs << content_tag(:tr, class: 'row_days_of_month') do
+                tds = ''.html_safe
+
+                number_of_days_per_week.times do |j|
+                  tds << content_tag(:td, class: ["row_#{i}", "column_#{j}"]) do
+                    day = row_to_day(i, j)
+                    day = day ? link_to(day.to_s, @options[:url] + '?' + to_query_params({ date: @day_start + (day - 1).days, scope: CalendarizeHelper::Scopes::DAILY })) : ''
+                    day
+                  end
+                end
+
+                tds
+              end
+
+              # The cell for the events
+              trs << content_tag(:tr, class: 'row_events', data: { events_count: @placed_events.has_key?(i) ? @placed_events.max { |a, b| a.count <=> b.count }.count : 1 }) do
+                tds = ''.html_safe
+
+                number_of_days_per_week.times do |j|
+                  tds << content_tag(:td, class: ["row_#{i}", "column_#{j}"]) do
+                    day = row_to_day(i, j)
+
+                    if @options[:cell_clicked_path].nil? || day.nil?
+
+                    elsif @options[:cell_clicked_path].kind_of?(Array)
+                      link_to('', @options[:cell_clicked_path][0] + '?' +  { start_time: I18n.l(@day_start + (day - 1).days)}.to_query, @options[:cell_clicked_path][1].merge({ style: 'display: block; width: 100%; height: 100%' }))
+                    else
+                      link_to('', @options[:cell_clicked_path] + '?' +  { start_time: I18n.l(@day_start + (day - 1).days)}.to_query, style: 'display: block; width: 100%; height: 100%')
+                    end
+                  end
+                end
+
+                tds
+              end
+            end
+
+            trs
+          end
+
+          content
+        end
+
+        # place the events at the end of the calendar
+        # they will be placed at the right place on the calendar with some javascript magic
+        @placed_events.each do |row, columns|
+          columns.each do |column, events|
+            events.each_with_index do |event, i|
+              @event = event
+              @is_all_day = false
+
+              tables << content_tag(:div, class: ['calendar_event', @event.status.underscore], data: { row: row, column: column, index: i }, style: 'z-index: 1;') do
+                content_tag(:div, class: 'content') { @view_context.capture(self, &block) }
+              end
+            end
+          end
+        end
+
+        tables
+      end
+    end
+
+
+    private
+
+      # We calculate the number of days between :week_start and :week_end
+      def number_of_days_per_week
+        ws = Date::DAYS_INTO_WEEK[@options[:week_start]]
+        we = Date::DAYS_INTO_WEEK[@options[:week_end]]
+        we += 7 if we <= ws
+        we + 1
+      end
+
+
+      # Get the range of days to show
+      def days_range
+        ws = Date::DAYS_INTO_WEEK[@options[:week_start]]
+        (ws...number_of_days_per_week).map{ |d| d % 7 }
+      end
+
+
+      # Transform a wday to string
+      def wday_to_string(wday)
+        Date::DAYNAMES[(wday + 1) % 7]
+      end
+
+
+      # Get the number of rows for the table
+      def rows_count
+        starting_wday = @day_start.wday - 1
+        starting_wday = 6 if starting_wday < 0
+
+        ((days_in_month(@day_start) + starting_wday) / 7.0).ceil
+      end
+
+
+      # Get the month's day corresponding to a row. Nil is returned if none.
+      def row_to_day(i, j)
+        starting_wday = @day_start.wday - 1
+        starting_wday = 6 if starting_wday < 0
+
+        base = (i * 7) + j
+
+        return nil if base < starting_wday || base - starting_wday + 1 > days_in_month(@day_start)
+
+        base - starting_wday + 1
+      end
+
+
+      # Get the row and column corresponding to a month's day.
+      # Response format: [i, j]
+      def day_to_row(month_day)
+        starting_wday = @day_start.wday - 1
+        starting_wday = 6 if starting_wday < 0
+
+        base = month_day + starting_wday - 1
+
+        #days_per_week = number_of_days_per_week
+
+        [base / 7, base % 7]
+      end
+
+
+      # Number of days in the month of a given date
+      def days_in_month(date)
+        (Date.new(date.year, 12, 31) << (12 - date.month)).day
+      end
+
+
+      # Get the next weekday from today or a specified date
+      # Example: date_of_next(:monday, Date.parse('2012-01-01')) => 2012-01-02
+      def date_of_next(wday, from = nil)
+        from ||= Date.today
+
+        from_wday = (from.wday + 1) % 6
+        to_wday = (Date::DAYS_INTO_WEEK[wday.to_sym] + 1) % 7
+
+        delta_in_days = from_wday - to_wday
+        delta_in_days += 7 if delta_in_days <= 0
+
+        from + delta_in_days
+      end
+
+  end
 
 end
