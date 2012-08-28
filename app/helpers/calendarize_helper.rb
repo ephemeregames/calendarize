@@ -242,6 +242,9 @@ module CalendarizeHelper
           cell_clicked_path: nil
         }.merge!(opts)
 
+        @options[:day_start] = [0,    @options[:day_start]].max
+        @options[:day_end]   = [1440, @options[:day_end]].min
+
         @day = args.shift || Date.today
         @events = args.shift || []
         @events = @events.map{ |e| HashEvent.new(e) } if @events.first.kind_of?(Hash)
@@ -290,7 +293,9 @@ module CalendarizeHelper
 
         # Get the row associated with the given time, in :units
         def row_unit(time_with_zone)
-          row(time_with_zone) / @options[:unit]
+          result = row(time_with_zone) / @options[:unit]
+
+          [[result, @_starting_row].max, @_ending_row - 1].min # clamp value to [@_starting_row, @_ending_row]
         end
 
 
@@ -327,10 +332,17 @@ module CalendarizeHelper
 
         super
 
-        # Partition the events between all-day and :not all-day events
-        # Then, for the :not all-day events, put them in rows
+        # Partition the events between 'all-day' and 'not all-day' events. Then, for the 'not all-day' events, put
+        # them in rows. An event is considered 'all day' if it's 'starting' and 'ending' times fall outside
+        # the starting/ending rows, inclusively.
         rows_events = {}
-        @all_day_events, not_all_day_events = @events.partition { |e| e.end_time.to_date > @day }
+
+        day_range =
+            (Time.zone.parse(@day.to_s) + @options[:day_start].minutes) .. (Time.zone.parse(@day.to_s) + @options[:day_end].minutes)
+
+        not_all_day_events, @all_day_events = @events.partition do |e|
+          day_range.cover?(e.start_time) || day_range.cover?(e.end_time)
+        end
 
         not_all_day_events.each do |e|
           row_unit = row_unit(e.start_time)
@@ -343,10 +355,9 @@ module CalendarizeHelper
         end
 
         # We remove the events that:
-        # - start or end before the :starting_row
-        # - start or end after the :ending_row
-        rows_events.each_value { |r| r.reject! { |e| row_unit(e.start_time) >= @_ending_row || row_unit(e.start_time) < @_starting_row } }
-        rows_events.each_value { |r| r.reject! { |e| row_unit(e.end_time)   >= @_ending_row || row_unit(e.end_time)   < @_starting_row } }
+        # - end before the :starting_row
+        # - start after the :ending_row
+        rows_events.each_value { |r| r.reject! { |e| row_unit(e.end_time) < @_starting_row || row_unit(e.start_time) >= @_ending_row } }
 
         # Sort each row by the starting time of the event, ascending order. If the starting time is the same, we
         # then sort by the ending time
@@ -378,11 +389,11 @@ module CalendarizeHelper
             while (!placed) do
               if !columns.has_key?(j)
                 columns[j] = [e]
-                @placed_events << [[i, row_unit(e.end_time - 1) + 1, j], e] # i + ((e.end_time - e.start_time) / (60 * @options[:unit])).ceil
+                @placed_events << [[i, row_unit(e.end_time) + 1, j], e]
                 placed = true
               elsif (row_unit(e.start_time) >= row_unit(columns[j].last.end_time - 1) + 1)
                 columns[j] << e
-                @placed_events << [[i, row_unit(e.end_time - 1) + 1, j], e]
+                @placed_events << [[i, row_unit(e.end_time) + 1, j], e]
                 placed = true
               else
                 j += 1

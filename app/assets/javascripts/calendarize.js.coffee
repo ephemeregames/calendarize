@@ -21,7 +21,7 @@ class @DailyCalendar
     @not_all_day_events.css('position', 'absolute')
     @not_all_day_events.css('overflow-x', 'hidden')
     @not_all_day_events.width(@not_all_day.width() - @first_row.position().left) if @first_row
-    @not_all_day_events.height(@not_all_day.height() - @not_all_day.position().top)
+    @not_all_day_events.height(@not_all_day.height())
 
     @not_all_day_events.position({
       my: 'left top',
