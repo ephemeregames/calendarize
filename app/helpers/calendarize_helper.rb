@@ -285,15 +285,19 @@ module CalendarizeHelper
 
       protected
 
-        # Get the row associated with the given time, in minutes
-        def row(time_with_zone)
-          (time_with_zone.to_datetime.hour * 60 + time_with_zone.to_datetime.min)
+        # Get the minutes from midnight of a given time
+        def to_minutes(datetime)
+          datetime.hour * 60 + datetime.min
         end
 
 
         # Get the row associated with the given time, in :units
-        def row_unit(time_with_zone)
-          result = row(time_with_zone) / @options[:unit]
+        # If exclusive is set to true, we remove 1 minute of times with 0 minutes (ex: 12:00 => 11:59)
+        def row_unit(time_with_zone, exclusive = false)
+          time = time_with_zone.to_datetime
+          time = time - 1.minutes if exclusive && time.min == 0
+
+          result = to_minutes(time) / @options[:unit]
 
           [[result, @_starting_row].max, @_ending_row - 1].min # clamp value to [@_starting_row, @_ending_row]
         end
@@ -386,14 +390,15 @@ module CalendarizeHelper
             j = 0
             placed = false
 
-            while (!placed) do
+            while !placed do
               if !columns.has_key?(j)
                 columns[j] = [e]
-                @placed_events << [[i, row_unit(e.end_time) + 1, j], e]
+                @placed_events << [[i, row_unit(e.end_time, true) + 1, j], e]
                 placed = true
-              elsif (row_unit(e.start_time) >= row_unit(columns[j].last.end_time - 1) + 1)
+              # we place the event in the same column because the event occurs after the last event of that column
+              elsif row_unit(e.start_time) > row_unit(columns[j].last.end_time, true)
                 columns[j] << e
-                @placed_events << [[i, row_unit(e.end_time) + 1, j], e]
+                @placed_events << [[i, row_unit(e.end_time, true) + 1, j], e]
                 placed = true
               else
                 j += 1
