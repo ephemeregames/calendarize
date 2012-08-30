@@ -774,7 +774,13 @@ module CalendarizeHelper
 
       # We remove the events that doesn't fall in a weekday between :week_start and :week_end
       week_days = days_range
-      @events.reject!{ |e| !week_days.include?(e.start_time.to_date.wday) }
+
+      @events.reject! do |e|
+        wday = e.start_time.to_date.wday - 1
+        wday = 6 if wday < 0
+
+        !week_days.include?(wday)
+      end
 
       # We put the events in a [i, j] list where i == row, j == column, so:
       # i: {
