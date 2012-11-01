@@ -390,23 +390,29 @@ module CalendarizeHelper
         columns = {}
         @placed_events = []
 
-        rows_events.each do |i,v|
+        rows_events.each do |i, v| # row, events
           v.each do |e|
             j = 0
             placed = false
 
+            end_row = row_unit(e.end_time, true, true)            # ceil(end_time - 1.minute)
+            end_row = i + 1 if end_row - i == 0                   # we enforce a minimal size for an event
+
             while !placed do
-              if !columns.has_key?(j)
-                columns[j] = [e]
-                end_row = row_unit(e.end_time, true, true)
-                end_row = i + 1 if end_row - i == 0 # we enforce a minimal size for an event
+
+              # current column end row
+              if columns.has_key?(j)
+                column_start_row = row_unit(columns[j].last.start_time)
+                column_end_row = row_unit(columns[j].last.end_time, true, true)
+                column_end_row = column_start_row + 1 if column_end_row - column_start_row == 0
+              end
+
+              if !columns.has_key?(j)                             # no column exists yet...
+                columns[j] = [e]                                  #... we create a new one
                 @placed_events << [[i, end_row, j], e]
                 placed = true
-              # we place the event in the same column because the event occurs after the last event of that column
-              elsif row_unit(e.start_time) > row_unit(columns[j].last.end_time, true)
+              elsif i >= column_end_row # we place the event in the same column because the event occurs after the last event of that column
                 columns[j] << e
-                end_row = row_unit(e.end_time, true, true)
-                end_row = i + 1 if end_row - i == 0 # we enforce a minimal size for an event
                 @placed_events << [[i, end_row, j], e]
                 placed = true
               else
