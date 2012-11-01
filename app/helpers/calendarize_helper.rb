@@ -444,9 +444,9 @@ module CalendarizeHelper
             content_tag(:thead) do
               content_tag(:tr) do
                 content = ''.html_safe
-                content << content_tag(:th, style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.options.verbose', default: 'Compact') : I18n.t('calendarize.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
-                content << content_tag(:th, style: 'width: 33%;') { ("<input type='text' class='datepicker' value='" + I18n.l(@day.to_date, format: @options[:date_format]) + "' />").html_safe }
-                content << content_tag(:th, style: 'width: 33%;') do
+                content << content_tag(:th, class: 'verbosity', style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.options.verbose', default: 'Compact') : I18n.t('calendarize.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
+                content << content_tag(:th, class: 'date_chooser', style: 'width: 33%;') { ("<input type='text' class='datepicker' value='" + I18n.l(@day.to_date, format: @options[:date_format]) + "' />").html_safe }
+                content << content_tag(:th, class: 'pagination', style: 'width: 33%;') do
                   options = ''.html_safe
                   options << link_to(I18n.t('calendarize.daily_calendar.options.previous_day', default: 'Previous day'), @options[:url] + '?' +  to_query_params({ date: @day.yesterday.to_date }))
                   options << ' | '
@@ -670,9 +670,9 @@ module CalendarizeHelper
             content_tag(:thead) do
               content_tag(:tr) do
                 content = ''.html_safe
-                content << content_tag(:th, style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.options.verbose', default: 'Compact') : I18n.t('calendarize.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
-                content << content_tag(:th, style: 'width: 33%;') { (I18n.t('calendarize.weekly_calendar.week_of', default: 'Week of') + "<input type='text' class='datepicker' value='" + I18n.l(@day_start.to_date, format: @options[:date_format]) + "' />").html_safe }
-                content << content_tag(:th, style: 'width: 33%;') do
+                content << content_tag(:th, class: 'verbosity', style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.options.verbose', default: 'Compact') : I18n.t('calendarize.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
+                content << content_tag(:th, class: 'date_chooser', style: 'width: 33%;') { (I18n.t('calendarize.weekly_calendar.week_of', default: 'Week of') + "<input type='text' class='datepicker' value='" + I18n.l(@day_start.to_date, format: @options[:date_format]) + "' />").html_safe }
+                content << content_tag(:th, class: 'pagination', style: 'width: 33%;') do
                   options = ''.html_safe
                   options << link_to(I18n.t('calendarize.weekly_calendar.options.previous_week', default: 'Previous week'), @options[:url] + '?' +  to_query_params({ date: @day_start.prev_week(@options[:week_start]).to_date }))
                   options << ' | '
@@ -833,9 +833,9 @@ module CalendarizeHelper
           content_tag(:thead) do
             content_tag(:tr) do
               content = ''.html_safe
-              content << content_tag(:th, style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.options.verbose', default: 'Compact') : I18n.t('calendarize.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
-              content << content_tag(:th, style: 'width: 33%;') { (I18n.t('calendarize.monthly_calendar.month_of', default: 'Month of') + "<input type='text' class='datepicker' value='" + I18n.l(@day_start.to_date, format: @options[:date_format]) + "' />").html_safe }
-              content << content_tag(:th, style: 'width: 33%;') do
+              content << content_tag(:th, class: 'verbosity', style: 'width: 33%;') { link_to(@options[:verbose] ? I18n.t('calendarize.options.verbose', default: 'Compact') : I18n.t('calendarize.options.not_verbose', default: 'Full'), @options[:url] + '?' + to_query_params({ date: @day.to_date, verbose: !@options[:verbose] })) }
+              content << content_tag(:th, class: 'date_chooser', style: 'width: 33%;') { (I18n.t('calendarize.monthly_calendar.month_of', default: 'Month of') + "<input type='text' class='datepicker' value='" + I18n.l(@day_start.to_date, format: @options[:date_format]) + "' />").html_safe }
+              content << content_tag(:th, class: 'pagination', style: 'width: 33%;') do
                 options = ''.html_safe
                 options << link_to(I18n.t('calendarize.monthly_calendar.options.previous_month', default: 'Previous month'), @options[:url] + '?' +  to_query_params({ date: @day_start.prev_month.to_date }))
                 options << ' | '
