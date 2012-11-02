@@ -304,7 +304,7 @@ module CalendarizeHelper
             result = to_minutes(time) / @options[:unit]
           end
 
-          [[result, @_starting_row].max, @_ending_row - 1].min # clamp value to [@_starting_row, @_ending_row]
+          [[result, @_starting_row].max, @_ending_row].min # clamp value to [@_starting_row, @_ending_row]
         end
 
 
