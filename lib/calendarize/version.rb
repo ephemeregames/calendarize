@@ -1,3 +1,3 @@
 module Calendarize
-  VERSION = '0.28'
+  VERSION = '0.29'
 end

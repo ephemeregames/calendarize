@@ -607,11 +607,12 @@ module CalendarizeHelper
           end
         end
 
+
         # We remove the events that:
         # - start or end before the :starting_row
         # - start or end after the :ending_row
         @_rows_events.each_value { |r| r.reject! { |e| row_unit(e.start_time) >= @_ending_row || row_unit(e.start_time) < @_starting_row } }
-        @_rows_events.each_value { |r| r.reject! { |e| row_unit(e.end_time)   >= @_ending_row || row_unit(e.end_time)   < @_starting_row } }
+        @_rows_events.each_value { |r| r.reject! { |e| row_unit(e.end_time)   >  @_ending_row || row_unit(e.end_time)   < @_starting_row } }
 
         # Sort each row by the starting time of the event, ascending order. If the starting time is the same, we
         # then sort by the ending time
