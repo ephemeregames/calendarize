@@ -24,6 +24,7 @@ module CalendarizeHelper
   # :verbose, boolean, show all the rows or only those with events, defaults to true
   # :unit_clicked_path, Array of 2 components: url, options, a link to follow when we click on the units on the left side
   # :cell_clicked_path, Array of 2 components: url, options, a link to follow when we click an empty spot on a row
+  # :scopes, Hash, scopes to append to links
   #
   def daily_calendar_for(*args, &block)
     DailyCalendarBuilder.new(self, *args).compute.render(&block)
@@ -51,6 +52,7 @@ module CalendarizeHelper
   # :id, integer, id of the calendar, default to one provided by this helper
   # :week_start, Date::DAYS_INTO_WEEK.keys or string, the day to start the week, defaults to :monday
   # :week_end, Date::DAYS_INTO_WEEK.keys or string, the day to end the week, defaults to :sunday
+  # :scopes, Hash, scopes to append to links
   #
   def weekly_calendar_for(*args, &block)
     WeeklyCalendarBuilder.new(self, *args).compute.render(&block)
@@ -76,6 +78,7 @@ module CalendarizeHelper
   # :unit, integer, the time unit in minutes between two rows, defaults to 60. Must be > 0.
   # :date_format, symbol, the format of the date to find at I18n.l('date.formats.date_format'), defaults to :long
   # :id, integer, id of the calendar, default to one provided by this helper
+  # :scopes, Hash, scopes to append to links
   #
   def monthly_calendar_for(*args, &block)
     MonthlyCalendarBuilder.new(self, *args).compute.render(&block)
@@ -239,7 +242,8 @@ module CalendarizeHelper
           verbose: true,
           day_start: 0,
           day_end: 1440,
-          cell_clicked_path: nil
+          cell_clicked_path: nil,
+          scopes: {}
         }.merge!(opts)
 
         @options[:day_start] = [0,    @options[:day_start]].max
@@ -315,7 +319,7 @@ module CalendarizeHelper
               verbose: @options[:verbose],
               scope: @options[:scope]
             }.merge(options)
-          }.to_query
+          }.merge(@options[:scopes]).to_query
         end
 
     end
