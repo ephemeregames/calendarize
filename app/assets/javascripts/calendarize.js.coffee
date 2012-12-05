@@ -60,11 +60,11 @@ class @DailyCalendar
       onSelect: (date, instance) ->
 
         if window.location.href.search('calendar%5Bdate%5D') == -1
-          window.location.href = window.location.href + '?calendar%5Bdate%5D=' + date
+          Turbolinks.visit(window.location.href + '?calendar%5Bdate%5D=' + date)
         else
-          window.location.href = window.location.href
+          Turbolinks.visit(window.location.href
             .replace(/calendar_date=[0-9\-]*/, 'calendar_date=' + date)
-            .replace(/calendar%5Bdate%5D=[0-9\-]*/, 'calendar%5Bdate%5D=' + date)
+            .replace(/calendar%5Bdate%5D=[0-9\-]*/, 'calendar%5Bdate%5D=' + date))
     )
 
 
@@ -118,11 +118,11 @@ class @WeeklyCalendar
       onSelect: (date, instance) ->
 
         if window.location.href.search('calendar%5Bdate%5D') == -1
-          window.location.href = window.location.href + '?calendar%5Bdate%5D=' + date
+          Turbolinks.visit(window.location.href + '?calendar%5Bdate%5D=' + date)
         else
-          window.location.href = window.location.href
+          Turbolinks.visit(window.location.href
             .replace(/calendar_date=[0-9\-]*/, 'calendar_date=' + date)
-            .replace(/calendar%5Bdate%5D=[0-9\-]*/, 'calendar%5Bdate%5D=' + date)
+            .replace(/calendar%5Bdate%5D=[0-9\-]*/, 'calendar%5Bdate%5D=' + date))
     )
 
 
@@ -189,11 +189,11 @@ class @MonthlyCalendar
         date = now + '-1'
 
         if window.location.href.search('calendar%5Bdate%5D') == -1
-          window.location.href = window.location.href + '?calendar%5Bdate%5D=' + date
+          Turbolinks.visit(window.location.href + '?calendar%5Bdate%5D=' + date)
         else
-          window.location.href = window.location.href
+          Turbolinks.visit(window.location.href
             .replace(/calendar_date=[0-9\-]*/, 'calendar_date=' + date)
-            .replace(/calendar%5Bdate%5D=[0-9\-]*/, 'calendar%5Bdate%5D=' + date)
+            .replace(/calendar%5Bdate%5D=[0-9\-]*/, 'calendar%5Bdate%5D=' + date))
     )
 
     $('.datepicker', @inner).bind 'focus', ->
@@ -205,7 +205,7 @@ class @MonthlyCalendar
       )
 
 
-$(document).ready ->
+many_times = =>
 
   # Initialize every daily calendar on the page
   daily_calendars = []
@@ -226,3 +226,7 @@ $(document).ready ->
 
   $('.monthly_calendar').each (index, element) =>
     monthly_calendars << new MonthlyCalendar(element.id)
+
+
+$(document).ready(many_times)
+$(document).on('page:load', many_times)
