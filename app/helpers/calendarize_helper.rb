@@ -177,22 +177,55 @@ module CalendarizeHelper
 
     module ActsAsEvent
 
-      def acts_as_event
-        scope :for_day, lambda { |date = nil| where('start_time >= ? AND start_time <= ?', date ? date : DateTime.now.beginning_of_day, date ? date.end_of_day : DateTime.now.end_of_day) }
+      def acts_as_event(start_time_column = 'start_time', end_time_column = 'end_time')
+
+        class << self
+
+          def acts_as_event_options
+            @acts_as_event_options ||= {}
+          end
+
+        end
+
+        acts_as_event_options[:start_time_column] = start_time_column
+        acts_as_event_options[:end_time_column] = end_time_column
+
+        scope :for_day, lambda { |date = nil| where("#{start_time_column} >= ? AND #{start_time_column} <= ?", date ? date : DateTime.now.beginning_of_day, date ? date.end_of_day : DateTime.now.end_of_day) }
         scope :for_week, lambda { |date = nil, week_start = :monday|
             where(
-              'start_time >= ? AND start_time < ?',
+              "#{start_time_column} >= ? AND #{start_time_column} < ?",
               date ? date.to_time.beginning_of_week(week_start) : DateTime.now.beginning_of_week(week_start),
               date ? date.to_time.end_of_week(week_start) : DateTime.now.end_of_week(week_start)
             )
         }
         scope :for_month, lambda { |date = nil|
             where(
-              'start_time >= ? AND start_time < ?',
+              "#{start_time_column} >= ? AND #{start_time_column} < ?",
               date ? date.to_time.beginning_of_month : DateTime.now.beginning_of_month,
               date ? date.to_time.end_of_month : DateTime.now.end_of_month
             )
         }
+
+        unless attribute_names.include?('start_time') || method_names.include?('start_time')
+          send(:define_method, :start_time) do
+            send(self.class.acts_as_event_options[:start_time_column]).to_time
+          end
+        end
+
+
+        unless attribute_names.include?('end_time') || method_names.include?('end_time')
+          send(:define_method, :end_time) do
+            send(self.class.acts_as_event_options[:end_time_column]).to_time
+          end
+        end
+
+
+        unless attribute_names.include?('status') || method_names.include?('status')
+          send(:define_method, :status) do
+            'active'
+          end
+        end
+
       end
 
     end
