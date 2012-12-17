@@ -956,14 +956,6 @@ module CalendarizeHelper
                   tds << content_tag(:td, class: classes) do
                     td = ''.html_safe
 
-                    #if @options[:cell_clicked_path].nil? || day.nil?
-                    #
-                    #elsif @options[:cell_clicked_path].kind_of?(Array)
-                    #  td << link_to('', @options[:cell_clicked_path][0] + '?' +  { start_time: I18n.l(@day_start + (day - 1).days)}.to_query, @options[:cell_clicked_path][1].merge({ style: 'display: block; width: 100%; height: 100%' }))
-                    #else
-                    #  td << link_to('', @options[:cell_clicked_path] + '?' +  { start_time: I18n.l(@day_start + (day - 1).days)}.to_query, style: 'display: block; width: 100%; height: 100%')
-                    #end
-
                     (@placed_events[i].attempt(:[], j) || []).each do |event|
                       @event = event
                       @is_all_day = false
@@ -971,6 +963,14 @@ module CalendarizeHelper
                       td << content_tag(:div, class: ['calendar_event', @event.status.underscore, @event.class.name.underscore], data: { row: i, column: j, index: i }, style: 'z-index: 1;') do
                         @view_context.capture(self, &block)
                       end
+                    end
+
+                    if @options[:cell_clicked_path].nil? || day.nil?
+
+                    elsif @options[:cell_clicked_path].kind_of?(Array)
+                      td << link_to('', @options[:cell_clicked_path][0] + '?' +  { start_time: I18n.l(@day_start + (day - 1).days)}.to_query, @options[:cell_clicked_path][1].merge({ style: 'display: block; width: 100%; height: 50px' }))
+                    else
+                      td << link_to('', @options[:cell_clicked_path] + '?' +  { start_time: I18n.l(@day_start + (day - 1).days)}.to_query, style: 'display: block; width: 100%; height: 50px')
                     end
 
                     td
