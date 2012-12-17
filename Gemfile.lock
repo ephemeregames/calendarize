@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    calendarize (0.32)
+    calendarize (0.33)
       rails (>= 3.1.0)
       turbolinks
 

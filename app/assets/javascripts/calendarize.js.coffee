@@ -131,43 +131,15 @@ class @MonthlyCalendar
   constructor: (id, opts) ->
     @inner = $('#' + id)
 
-    @options = {
-      height: 70
-    }
-
-    $.extend(@options, opts)
-
     this.init()
 
 
   init: =>
     $('.row_events', @inner).each (index, element) =>
       e = $(element)
-      e.height(e.data('events-count') * @options['height'])
 
     $('.calendar_event', @inner).each (index, element) =>
       e = $(element)
-
-      # find the cell to put the event
-      cell = $('.row_events >' + '.row_' + e.data('row') + '.column_' + e.data('column'), @inner)
-
-      e.width(cell.outerWidth(true) - 1)
-      e.height(@options['height'])
-      e.css('position', 'absolute')
-
-      e.position({
-        my: 'left top',
-        at: 'left top',
-        of: $('.row_events >' + '.row_' + e.data('row') + '.column_' + e.data('column'), @inner),
-        offset: '0 ' + e.data('index') * (@options['height']),
-        collision: 'none'
-      })
-
-
-    # Set height of rows
-    $('td', @inner).each (index, element) =>
-      e = $(element)
-      e.css('height', e.height())
 
 
     # initialize date picker

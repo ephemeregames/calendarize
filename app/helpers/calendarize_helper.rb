@@ -78,7 +78,8 @@ module CalendarizeHelper
   # :unit, integer, the time unit in minutes between two rows, defaults to 60. Must be > 0.
   # :date_format, symbol, the format of the date to find at I18n.l('date.formats.date_format'), defaults to :long
   # :id, integer, id of the calendar, default to one provided by this helper
-  # :scopes, Hash, scopes to append to links
+  # :scopes, Hash, scopes to append to links,
+  # :link_to_daily: boolean, add a link to the daily calendar on each day
   #
   def monthly_calendar_for(*args, &block)
     MonthlyCalendarBuilder.new(self, *args).compute.render(&block)
@@ -583,8 +584,8 @@ module CalendarizeHelper
             @placed_events.each do |e|
               @event = e[1]
               @is_all_day = false
-              events_div << content_tag(:div, class: ['calendar_event', @event.status.underscore], data: { row_start: e[0][0], row_end: e[0][1], column: e[0][2] }, style: 'z-index: 1;') do
-                content_tag(:div, class: 'content') { @view_context.capture(self, &block) }
+              events_div << content_tag(:div, class: ['calendar_event', @event.status.underscore, @event.class.name.underscore], data: { row_start: e[0][0], row_end: e[0][1], column: e[0][2] }, style: 'z-index: 1;') do
+                @view_context.capture(self, &block)
               end
             end
 
@@ -780,8 +781,8 @@ module CalendarizeHelper
           @placed_events.each do |e|
             @event = e[1]
             @is_all_day = false
-            tables << content_tag(:div, class: ['calendar_event', @event.status.underscore], data: { row: e[0][0], column: e[0][1], index: e[0][2] }, style: 'z-index: 1;') do
-              content_tag(:div, class: 'content') { @view_context.capture(self, &block) }
+            tables << content_tag(:div, class: ['calendar_event', @event.status.underscore, @event.class.name.underscore], data: { row: e[0][0], column: e[0][1], index: e[0][2] }, style: 'z-index: 1;') do
+              @view_context.capture(self, &block)
             end
           end
 
@@ -810,7 +811,8 @@ module CalendarizeHelper
         id: "monthly_calendar_#{@@uuid}",
         week_start: :monday,
         week_end: :sunday,
-        scope: 'monthly'
+        scope: 'monthly',
+        link_to_daily: true
       }.merge!(args.extract_options!)
 
       opts[:week_start] = opts[:week_start].to_sym
@@ -923,7 +925,13 @@ module CalendarizeHelper
                   classes = ["row_#{i}", "column_#{j}"]
                   classes << 'disabled' if day.nil?
                   tds << content_tag(:td, class: classes) do
-                    day = day ? link_to(day.to_s, @options[:url] + '?' + to_query_params({ date: @day_start + (day - 1).days, scope: CalendarizeHelper::Scopes::DAILY })) : ''
+                    if day
+                      day = day.to_s unless @options[:link_to_daily]
+                      day = link_to(day.to_s, @options[:url] + '?' + to_query_params({ date: @day_start + (day - 1).days, scope: CalendarizeHelper::Scopes::DAILY })) if @options[:link_to_daily]
+                    else
+                      day = ''
+                    end
+
                     day
                   end
                 end
@@ -932,7 +940,12 @@ module CalendarizeHelper
               end
 
               # The cell for the events
-              trs << content_tag(:tr, class: 'row_events', data: { events_count: @placed_events.has_key?(i) ? @placed_events[i].values.max { |a, b| a.count <=> b.count }.count + 1 : 1 }) do
+
+              # if we have a link to follow when we click the cell, we need enough space in the cell in presence of
+              # events. So, we add another space for an event.
+              additional_event = @options[:cell_clicked_path].present? ? 1 : 0
+
+              trs << content_tag(:tr, class: 'row_events', data: { events_count: @placed_events.has_key?(i) ? @placed_events[i].values.max { |a, b| a.count <=> b.count }.count + additional_event : 1 }) do
                 tds = ''.html_safe
 
                 number_of_days_per_week.times do |j|
@@ -941,13 +954,26 @@ module CalendarizeHelper
                   classes << 'disabled' if day.nil?
 
                   tds << content_tag(:td, class: classes) do
-                    if @options[:cell_clicked_path].nil? || day.nil?
+                    td = ''.html_safe
 
-                    elsif @options[:cell_clicked_path].kind_of?(Array)
-                      link_to('', @options[:cell_clicked_path][0] + '?' +  { start_time: I18n.l(@day_start + (day - 1).days)}.to_query, @options[:cell_clicked_path][1].merge({ style: 'display: block; width: 100%; height: 100%' }))
-                    else
-                      link_to('', @options[:cell_clicked_path] + '?' +  { start_time: I18n.l(@day_start + (day - 1).days)}.to_query, style: 'display: block; width: 100%; height: 100%')
+                    #if @options[:cell_clicked_path].nil? || day.nil?
+                    #
+                    #elsif @options[:cell_clicked_path].kind_of?(Array)
+                    #  td << link_to('', @options[:cell_clicked_path][0] + '?' +  { start_time: I18n.l(@day_start + (day - 1).days)}.to_query, @options[:cell_clicked_path][1].merge({ style: 'display: block; width: 100%; height: 100%' }))
+                    #else
+                    #  td << link_to('', @options[:cell_clicked_path] + '?' +  { start_time: I18n.l(@day_start + (day - 1).days)}.to_query, style: 'display: block; width: 100%; height: 100%')
+                    #end
+
+                    (@placed_events[i].attempt(:[], j) || []).each do |event|
+                      @event = event
+                      @is_all_day = false
+
+                      td << content_tag(:div, class: ['calendar_event', @event.status.underscore, @event.class.name.underscore], data: { row: i, column: j, index: i }, style: 'z-index: 1;') do
+                        @view_context.capture(self, &block)
+                      end
                     end
+
+                    td
                   end
                 end
 
@@ -959,21 +985,6 @@ module CalendarizeHelper
           end
 
           content
-        end
-
-        # place the events at the end of the calendar
-        # they will be placed at the right place on the calendar with some javascript magic
-        @placed_events.each do |row, columns|
-          columns.each do |column, events|
-            events.each_with_index do |event, i|
-              @event = event
-              @is_all_day = false
-
-              tables << content_tag(:div, class: ['calendar_event', @event.status.underscore], data: { row: row, column: column, index: i }, style: 'z-index: 1;') do
-                content_tag(:div, class: 'content') { @view_context.capture(self, &block) }
-              end
-            end
-          end
         end
 
         tables
